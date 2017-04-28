@@ -1,0 +1,8 @@
+node_modules
+*.log
+*.db
+static/downloads/*
+.vscode
+dist/*.js
+dist/**/*.js
+dist/**/*.js.map

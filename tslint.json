@@ -1,0 +1,42 @@
+{
+    "extends": "tslint:recommended",
+    "rules": {
+        "object-literal-sort-keys": false,
+        "trailing-comma": [
+            false
+        ],
+        "ordered-imports": [
+            false
+        ],
+        "no-string-literal": false,
+        "object-literal-shorthand": false,
+        "arrow-parens": false,
+        "no-console": [
+            false
+        ],
+        "max-line-length": [
+            180
+        ],
+        "only-arrow-functions": [
+            false
+        ],
+        "member-access": [
+            false
+        ],
+        "member-ordering": [{
+            "name": "Custom ordering",
+            "kinds": [
+                "fields",
+                "constructor",
+                "methods"
+            ]
+        }],
+        "array-type": [
+            false
+        ],
+        "typedef": [true],
+        "interface-over-type-literal": [false],
+        "no-floating-promises": [true],
+        "space-before-function-paren": ["anonymous"]
+    }
+}
