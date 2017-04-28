@@ -2,7 +2,7 @@
   "name": "express-utils",
   "version": "1.0.0",
   "description": "Decorators and base classes to help with express apps",
-  "main": "src/index.js",
+  "main": "index.ts",
   "author": "jamiepennell@live.com",
   "license": "ISC",
   "repository": "https://github.com/jammie1903/express-utils",
