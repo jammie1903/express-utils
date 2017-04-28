@@ -6,6 +6,9 @@
   "author": "jamiepennell@live.com",
   "license": "ISC",
   "repository": "https://github.com/jammie1903/express-utils",
+  "scripts": {
+    "postinstall" : "tsc"
+  },
   "dependencies": {
     "@types/reflect-metadata": "0.0.5",
     "body-parser": "^1.17.1",

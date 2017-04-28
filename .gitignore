@@ -3,6 +3,4 @@ node_modules
 *.db
 static/downloads/*
 .vscode
-dist/*.js
-dist/**/*.js
-dist/**/*.js.map
+dist/
