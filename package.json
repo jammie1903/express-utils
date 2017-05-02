@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Decorators and base classes to help with express apps",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "author": "jamiepennell@live.com",
   "license": "ISC",
   "repository": "https://github.com/jammie1903/express-utils",
@@ -10,21 +11,20 @@
     "postinstall" : "tsc"
   },
   "dependencies": {
-    "@types/reflect-metadata": "0.0.5",
     "body-parser": "^1.17.1",
     "debug": "^2.6.4",
     "express": "^4.15.2",
     "morgan": "^1.8.1",
-    "reflect-metadata": "^0.1.10"
-  },
-  "devDependencies": {
+    "reflect-metadata": "^0.1.10",
     "@types/body-parser": "^1.16.3",
     "@types/debug": "0.0.29",
     "@types/express": "^4.0.35",
     "@types/morgan": "^1.7.32",
     "@types/node": "^7.0.13",
     "@types/request": "0.0.42",
-    "@types/reflect-metadata": "0.0.5",
+    "@types/reflect-metadata": "0.0.5"
+  },
+  "devDependencies": {
     "gulp": "^3.9.1",
     "gulp-typescript": "^3.1.6",
     "typescript": "^2.2.2"
