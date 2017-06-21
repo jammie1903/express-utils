@@ -57,11 +57,8 @@ export default class Endpoint {
             });
         }
 
-        const responseBody = this.method.apply(this.controller, parameters);
-
-        if (typeof responseBody !== "undefined") {
-            response.jsonp(responseBody);
-        }
+        const responseBody = this.method.apply(this.controller, parameters) || "";
+        Promise.resolve(responseBody).then(response.jsonp);
     }
 
     private getValue(value: string, type: string): any {
