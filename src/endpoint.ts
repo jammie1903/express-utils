@@ -58,7 +58,7 @@ export default class Endpoint {
         }
 
         const responseBody = this.method.apply(this.controller, parameters) || "";
-        Promise.resolve(responseBody).then(response.jsonp).catch(next);
+        Promise.resolve(responseBody).then(result => response.jsonp(result)).catch(next);
     }
 
     private getValue(value: string, type: string): any {
