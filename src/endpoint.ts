@@ -30,7 +30,7 @@ export default class Endpoint {
         this.injectResponse = this.types.length > 1 && this.injectRequest && injectionIndexes.indexOf(1) === -1;
     }
 
-    public handle(request: Request, response: Response) {
+    public handle(request: Request, response: Response, next) {
 
         const parameters: any[] = Array(this.types.length).fill(null);
 
@@ -58,7 +58,7 @@ export default class Endpoint {
         }
 
         const responseBody = this.method.apply(this.controller, parameters) || "";
-        Promise.resolve(responseBody).then(response.jsonp);
+        Promise.resolve(responseBody).then(response.jsonp).catch(next);
     }
 
     private getValue(value: string, type: string): any {

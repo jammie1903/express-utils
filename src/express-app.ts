@@ -140,7 +140,7 @@ export abstract class ExpressApp {
 
                                 const endpoint: Endpoint = new Endpoint(e, controllerData, instance);
 
-                                const endPointWrapper = (request, response) => endpoint.handle(request, response);
+                                const endPointWrapper = (request, response, next) => endpoint.handle(request, response, next);
 
                                 switch (controllerData.endpoints[e].method) {
                                     case "GET": router.get(controllerData.endpoints[e].path, endPointWrapper); break;
