@@ -10,8 +10,6 @@ export abstract class ExpressApp {
 
     private settings: Dictionary<string>;
     private applicationRoots: string[];
-    private controllersPath: string;
-    private servicesPath: string;
     public express: express.Application;
     private servicePrototypes = {};
     private services = {};

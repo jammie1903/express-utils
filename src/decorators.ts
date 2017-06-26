@@ -20,18 +20,6 @@ export function Application(...paths: string[]) {
     };
 }
 
-export function Controllers(path: string) {
-    return function (target: any) {
-        target.prototype.controllersPath = path;
-    };
-}
-
-export function Services(path: string) {
-    return function (target: any) {
-        target.prototype.servicesPath = path;
-    };
-}
-
 export function Controller(path: string) {
     return function (target: any) {
         initVal(target.prototype, ["controller"]);
