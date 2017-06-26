@@ -95,7 +95,7 @@ export function RequestBody(name?: string) {
     };
 }
 
-export function EndpointParameterDecorator(target: any, propertyKey: string, parameterIndex: number, handler: (request: Request) => string) {
+export function EndpointParameterDecorator(target: any, propertyKey: string, parameterIndex: number, handler: (request: Request) => any) {
     initVal(target, ["controller", "endpoints", propertyKey, ["parameterDecorators", []]]);
     target.controller.endpoints[propertyKey].parameterDecorators.push({ index: parameterIndex, handler });
 }
