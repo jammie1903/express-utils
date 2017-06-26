@@ -124,6 +124,7 @@ export abstract class ExpressApp {
                 this.servicePrototypes[service.prototype.service.name].push(service);
             }
         });
+        Object.keys(this.servicePrototypes).forEach(serviceName => this.getService(serviceName));
     }
 
     private loadControllers() {
