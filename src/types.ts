@@ -1,3 +1,5 @@
+import { Request } from "express";
+
 export type Dictionary<T> = { [key: string]: T };
 
 export type ControllerMetaData = {
@@ -8,14 +10,13 @@ export type ControllerMetaData = {
 export type EndpointMetaData = {
     path: string,
     method: string,
-    requestParams: ParameterInfo[],
-    queryParams: ParameterInfo[],
-    requestBody: any
+    types: string[],
+    parameterDecorators: ParameterInfo[],
 };
 
 export type ParameterInfo = {
     index: number,
-    name: string
+    handler: (request: Request) => string
 };
 
 export type Autowirable = {

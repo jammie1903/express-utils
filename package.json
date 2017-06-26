@@ -1,6 +1,6 @@
 {
   "name": "express-utils",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "description": "Decorators and base classes to help with express apps",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -25,8 +25,6 @@
     "@types/reflect-metadata": "0.0.5"
   },
   "devDependencies": {
-    "gulp": "^3.9.1",
-    "gulp-typescript": "^3.1.6",
     "typescript": "^2.2.2"
   }
 }

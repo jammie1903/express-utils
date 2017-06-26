@@ -3,11 +3,13 @@ import * as HTTPError from "http-errors";
 import * as fs from "fs";
 import * as path from "path";
 import Endpoint from "./endpoint";
+import LoadedHandlers from "./loaded-handlers";
 import { Dictionary, Autowirable } from "./types";
 
 export abstract class ExpressApp {
 
     private settings: Dictionary<string>;
+    private applicationRoots: string[];
     private controllersPath: string;
     private servicesPath: string;
     public express: express.Application;
@@ -24,16 +26,13 @@ export abstract class ExpressApp {
 
         this.middleware();
 
-        if (this.servicesPath) {
+        if (this.applicationRoots) {
+            this.loadAll();
             this.loadServices();
-        }
-
-        if (this.controllersPath) {
             this.loadControllers();
-        }
-
-        if (this.servicesPath) {
             this.injectServices();
+        } else {
+            throw new Error("applicationRoots must be specified via @Application");
         }
     }
 
@@ -114,50 +113,52 @@ export abstract class ExpressApp {
         }
     }
 
+    private loadAll() {
+        this.applicationRoots.forEach(root => this.walkSync(root)
+            .filter((file) => file.slice(-11) === ".service.js" || file.slice(-14) === ".controller.js")
+            .forEach(require));
+    }
+
     private loadServices() {
-        this.walkSync(this.servicesPath).filter((file) => file.slice(-11) === ".service.js")
-            .forEach((file) => {
-                const service = require(file).default;
-                if (typeof service === "function" && service.prototype.service) {
-                    this.servicePrototypes[service.prototype.service.name] = this.servicePrototypes[service.prototype.service.name] || [];
-                    this.servicePrototypes[service.prototype.service.name].push(service);
-                }
-            });
+        LoadedHandlers.services.forEach(service => {
+            if (typeof service === "function" && service.prototype.service) {
+                this.servicePrototypes[service.prototype.service.name] = this.servicePrototypes[service.prototype.service.name] || [];
+                this.servicePrototypes[service.prototype.service.name].push(service);
+            }
+        });
     }
 
     private loadControllers() {
-        this.walkSync(this.controllersPath).filter((file) => file.slice(-14) === ".controller.js")
-            .forEach((file) => {
-                const controller = require(file).default;
-                if (typeof controller === "function" && controller.prototype.controller) {
-                    const controllerData = controller.prototype.controller;
-                    const router: express.Router = express.Router();
+        LoadedHandlers.controllers.forEach(controller => {
+            if (typeof controller === "function" && controller.prototype.controller) {
+                const controllerData = controller.prototype.controller;
+                const router: express.Router = express.Router();
 
-                    const instance = new controller();
-                    if (controllerData.endpoints) {
-                        for (const e in controllerData.endpoints) {
-                            if (controllerData.endpoints.hasOwnProperty(e)) {
+                const instance = new controller();
+                if (controllerData.endpoints) {
+                    for (const e in controllerData.endpoints) {
+                        if (controllerData.endpoints.hasOwnProperty(e)) {
 
-                                const endpoint: Endpoint = new Endpoint(e, controllerData, instance);
+                            const endpoint: Endpoint = new Endpoint(e, controllerData, instance);
 
-                                const endPointWrapper = (request, response, next) => endpoint.handle(request, response, next);
+                            const endPointWrapper = (request, response, next) => endpoint.handle(request, response, next);
 
-                                switch (controllerData.endpoints[e].method) {
-                                    case "GET": router.get(controllerData.endpoints[e].path, endPointWrapper); break;
-                                    case "POST": router.post(controllerData.endpoints[e].path, endPointWrapper); break;
-                                    case "PUT": router.put(controllerData.endpoints[e].path, endPointWrapper); break;
-                                    case "DELETE": router.delete(controllerData.endpoints[e].path, endPointWrapper); break;
-                                    case "PATCH": router.patch(controllerData.endpoints[e].path, endPointWrapper); break;
-                                }
+                            switch (controllerData.endpoints[e].method) {
+                                case "GET": router.get(controllerData.endpoints[e].path, endPointWrapper); break;
+                                case "POST": router.post(controllerData.endpoints[e].path, endPointWrapper); break;
+                                case "PUT": router.put(controllerData.endpoints[e].path, endPointWrapper); break;
+                                case "DELETE": router.delete(controllerData.endpoints[e].path, endPointWrapper); break;
+                                case "PATCH": router.patch(controllerData.endpoints[e].path, endPointWrapper); break;
                             }
                         }
                     }
-                    if (controller.prototype.autowires) {
-                        this.injectQueue.push({ instance: instance, autowireFields: controller.prototype.autowires });
-                    }
-                    this.express.use(controllerData.path, router);
                 }
-            });
+                if (controller.prototype.autowires) {
+                    this.injectQueue.push({ instance: instance, autowireFields: controller.prototype.autowires });
+                }
+                this.express.use(controllerData.path, router);
+            }
+        });
     }
 
     protected abstract middleware(): void;

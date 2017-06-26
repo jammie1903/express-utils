@@ -1,5 +1,6 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { Dictionary } from "./types";
+import LoadedHandlers from "./loaded-handlers";
 
 function initVal(object: any, keys: Array<string | any[]>) {
     let obj = object;
@@ -11,6 +12,12 @@ function initVal(object: any, keys: Array<string | any[]>) {
         obj[key[0]] = obj[key[0]] || key[1];
         obj = obj[key[0]];
     });
+}
+
+export function Application(...paths: string[]) {
+    return function (target: any) {
+        target.prototype.applicationRoots = paths;
+    };
 }
 
 export function Controllers(path: string) {
@@ -29,6 +36,7 @@ export function Controller(path: string) {
     return function (target: any) {
         initVal(target.prototype, ["controller"]);
         target.prototype.controller.path = path;
+        LoadedHandlers.controllers.push(target);
     };
 }
 
@@ -36,6 +44,7 @@ function setEndpoint(target: any, propertyKey: string, path: string, method: str
     initVal(target, ["controller", "endpoints", propertyKey]);
     target.controller.endpoints[propertyKey].path = path;
     target.controller.endpoints[propertyKey].method = method;
+    target.controller.endpoints[propertyKey].types = Reflect.getMetadata("design:paramtypes", target, propertyKey).map(a => a.name);
 }
 
 export function Get(path: string) {
@@ -70,23 +79,25 @@ export function Patch(path: string) {
 
 export function RequestParam(name: string) {
     return function (target: any, propertyKey: string, parameterIndex: number) {
-        initVal(target, ["controller", "endpoints", propertyKey, ["requestParams", []]]);
-        target.controller.endpoints[propertyKey].requestParams.push({ index: parameterIndex, name: name });
+        EndpointParameterDecorator(target, propertyKey, parameterIndex, request => request.params[name]);
     };
 }
 
 export function QueryParam(name: string) {
     return function (target: any, propertyKey: string, parameterIndex: number) {
-        initVal(target, ["controller", "endpoints", propertyKey, ["queryParams", []]]);
-        target.controller.endpoints[propertyKey].queryParams.push({ index: parameterIndex, name: name });
+        EndpointParameterDecorator(target, propertyKey, parameterIndex, request => request.query[name]);
     };
 }
 
 export function RequestBody(name?: string) {
     return function (target: any, propertyKey: string, parameterIndex: number) {
-        initVal(target, ["controller", "endpoints", propertyKey, ["requestBody", []]]);
-        target.controller.endpoints[propertyKey].requestBody.push({ index: parameterIndex, name: name });
+        EndpointParameterDecorator(target, propertyKey, parameterIndex, request => name ? request.body[name] : request.body);
     };
+}
+
+export function EndpointParameterDecorator(target: any, propertyKey: string, parameterIndex: number, handler: (request: Request) => string) {
+    initVal(target, ["controller", "endpoints", propertyKey, ["parameterDecorators", []]]);
+    target.controller.endpoints[propertyKey].parameterDecorators.push({ index: parameterIndex, handler });
 }
 
 function generateServiceName(className: string) {
@@ -102,6 +113,7 @@ export function Service(name?: string, environmentOptions: Dictionary<string | s
             name: name || generateServiceName(target.name),
             environmentOptions: environmentOptions,
         };
+        LoadedHandlers.services.push(target);
     };
 }
 
