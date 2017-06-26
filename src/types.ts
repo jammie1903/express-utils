@@ -16,7 +16,7 @@ export type EndpointMetaData = {
 
 export type ParameterInfo = {
     index: number,
-    handler: (request: Request) => string
+    handler: (request: Request) => any
 };
 
 export type Autowirable = {

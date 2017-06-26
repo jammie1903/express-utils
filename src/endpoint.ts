@@ -43,17 +43,20 @@ export default class Endpoint {
         Promise.resolve(responseBody).then(result => response.finished ? null : response.jsonp(result)).catch(next);
     }
 
-    private getValue(value: string, type: string): any {
-        switch (type) {
-            case "Boolean":
-                const lowercaseValue = value ? value.toLowerCase() : null;
-                return lowercaseValue && (lowercaseValue === "true" || lowercaseValue === "y" || lowercaseValue === "1");
-            case "Number":
-                const numberValue: number = Number(value);
-                return isNaN(numberValue) ? null : numberValue;
-            case "String":
-                return typeof value !== "undefined" && value !== null ? String(value) : null;
-            default: return value;
+    private getValue(value: string, type: any): any {
+        if (typeof value === "undefined" || typeof value === "string") {
+            switch (type) {
+                case "Boolean":
+                    const lowercaseValue = value ? value.toLowerCase() : null;
+                    return lowercaseValue && (lowercaseValue === "true" || lowercaseValue === "y" || lowercaseValue === "1");
+                case "Number":
+                    const numberValue: number = Number(value);
+                    return isNaN(numberValue) ? null : numberValue;
+                case "String":
+                    return typeof value !== "undefined" && value !== null ? String(value) : null;
+                default: return value;
+            }
         }
+        return value;
     }
 }
