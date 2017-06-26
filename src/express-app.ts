@@ -3,6 +3,7 @@ import * as HTTPError from "http-errors";
 import * as fs from "fs";
 import * as path from "path";
 import Endpoint from "./endpoint";
+import { ServiceCache } from "./cache";
 import LoadedHandlers from "./loaded-handlers";
 import { Dictionary, Autowirable } from "./types";
 
@@ -12,7 +13,6 @@ export abstract class ExpressApp {
     private applicationRoots: string[];
     public express: express.Application;
     private servicePrototypes = {};
-    private services = {};
     private injectQueue: Autowirable[] = [];
 
     protected abstract environmentSettings(): Dictionary<string>;
@@ -79,8 +79,8 @@ export abstract class ExpressApp {
     }
 
     private getService(serviceName) {
-        if (this.services[serviceName]) {
-            return this.services[serviceName];
+        if (ServiceCache.get(serviceName)) {
+            return ServiceCache.get(serviceName);
         } else {
             const servicePrototypeList = this.servicePrototypes[serviceName];
 
@@ -103,7 +103,7 @@ export abstract class ExpressApp {
             }
             const service = matchingServices[0];
             const instance = new service();
-            this.services[serviceName] = instance;
+            ServiceCache.put(serviceName, instance);
             if (service.prototype.autowires) {
                 this.injectQueue.push({ instance: instance, autowireFields: service.prototype.autowires });
             }
