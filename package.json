@@ -1,6 +1,6 @@
 {
   "name": "express-utils",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Decorators and base classes to help with express apps",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -8,23 +8,22 @@
   "license": "ISC",
   "repository": "https://github.com/jammie1903/express-utils",
   "scripts": {
-    "postinstall" : "tsc"
+    "tsc": "tsc",
+    "postinstall": "npm run tsc"
   },
   "dependencies": {
-    "body-parser": "^1.17.1",
-    "debug": "^2.6.4",
-    "express": "^4.15.2",
-    "morgan": "^1.8.1",
-    "reflect-metadata": "^0.1.10",
     "@types/body-parser": "^1.16.3",
     "@types/debug": "0.0.29",
     "@types/express": "^4.0.35",
     "@types/morgan": "^1.7.32",
     "@types/node": "^7.0.13",
+    "@types/reflect-metadata": "0.0.5",
     "@types/request": "0.0.42",
-    "@types/reflect-metadata": "0.0.5"
-  },
-  "devDependencies": {
+    "body-parser": "^1.17.1",
+    "debug": "^2.6.4",
+    "express": "^4.15.2",
+    "morgan": "^1.8.1",
+    "reflect-metadata": "^0.1.10",
     "typescript": "^2.2.2"
   }
 }
