@@ -143,7 +143,7 @@ export abstract class ExpressApp {
             .forEach(file => {
                 require(file);
                 if (file.slice(-14) === ".controller.js") {
-                    readPromise = readPromise.then(commentMap => new Promise((resolve, reject) => {
+                    readPromise = readPromise.then(commentMap => new Promise<any[]>((resolve, reject) => {
                         fs.readFile(file, "utf-8", (err, data) => {
                             if (err) {
                                 reject(err);
