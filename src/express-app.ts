@@ -6,6 +6,8 @@ import Endpoint from "./endpoint";
 import { ServiceCache } from "./cache";
 import LoadedHandlers from "./loaded-handlers";
 import { Dictionary, Autowirable } from "./types";
+import { Comment, getMethodComments } from "./comment-parser";
+import toHtml from "./doc-formatter";
 
 export abstract class ExpressApp {
 
@@ -14,6 +16,9 @@ export abstract class ExpressApp {
     public express: express.Application;
     private servicePrototypes = {};
     private injectQueue: Autowirable[] = [];
+    private endpoints: Endpoint[] = [];
+    private apiReference: string;
+    private comments = [];
 
     protected abstract environmentSettings(): Dictionary<string>;
 
@@ -23,15 +28,33 @@ export abstract class ExpressApp {
         this.express = express();
 
         this.middleware();
+        let commentParsePromise: Promise<Comment[]>;
 
         if (this.applicationRoots) {
-            this.loadAll();
+            commentParsePromise = this.loadAll();
             this.loadServices();
             this.loadControllers();
             this.injectServices();
         } else {
             throw new Error("applicationRoots must be specified via @Application");
         }
+        // this.showPathsUrl = "/describe";
+        if (this.apiReference) {
+            this.registerPathsUrl(commentParsePromise);
+        }
+    }
+
+    private registerPathsUrl(commentParsePromise: Promise<Comment[]>) {
+        commentParsePromise.then(comments => this.comments = comments);
+        const router: express.Router = express.Router();
+        router.get("/", (request, response) => {
+            if (this.comments) {
+                response.send(toHtml(this.endpoints.filter(endpoint => endpoint.matchesSearch(request.url.substring(this.apiReference.length))).map(endpoint => endpoint.describe(this.comments))));
+            } else {
+                throw new Error("endpoint descriptions not yet parsed");
+            }
+        });
+        this.express.use(this.apiReference, router);
     }
 
     private walkSync(dir) {
@@ -112,9 +135,26 @@ export abstract class ExpressApp {
     }
 
     private loadAll() {
+
+        let readPromise = Promise.resolve([]);
+
         this.applicationRoots.forEach(root => this.walkSync(root)
             .filter((file) => file.slice(-11) === ".service.js" || file.slice(-14) === ".controller.js")
-            .forEach(require));
+            .forEach(file => {
+                require(file);
+                if (file.slice(-14) === ".controller.js") {
+                    readPromise = readPromise.then(commentMap => new Promise((resolve, reject) => {
+                        fs.readFile(file, "utf-8", (err, data) => {
+                            if (err) {
+                                reject(err);
+                            } else {
+                                resolve(commentMap.concat(getMethodComments(data)));
+                            }
+                        });
+                    }));
+                }
+            }));
+        return readPromise;
     }
 
     private loadServices() {
@@ -139,6 +179,7 @@ export abstract class ExpressApp {
                         if (controllerData.endpoints.hasOwnProperty(e)) {
 
                             const endpoint: Endpoint = new Endpoint(e, controllerData, instance);
+                            this.endpoints.push(endpoint);
 
                             const endPointWrapper = (request, response, next) => endpoint.handle(request, response, next);
 

@@ -1,5 +1,6 @@
-import { ControllerMetaData, EndpointMetaData } from "./types";
+import { ControllerMetaData, EndpointMetaData, ParameterDescription, EndpointDescription } from "./types";
 import { Request, Response } from "express";
+import { Comment } from "./comment-parser";
 import "reflect-metadata";
 
 export default class Endpoint {
@@ -7,11 +8,12 @@ export default class Endpoint {
     private injectRequest: boolean;
     private endpointMetaData: EndpointMetaData;
     private method: any;
+    private fullPath: string;
 
-    constructor(private methodName: string, private controllerData: ControllerMetaData, private controller: any) {
+    constructor(private methodName: string, controllerData: ControllerMetaData, private controller: any) {
         this.method = controller[methodName];
-
         this.endpointMetaData = controllerData.endpoints[methodName];
+        this.fullPath = this.trimSlashes(this.trimSlashes(controllerData.path) + "/" + this.trimSlashes(this.endpointMetaData.path));
 
         let injectionIndexes = [];
         if (this.endpointMetaData.parameterDecorators) {
@@ -35,7 +37,7 @@ export default class Endpoint {
 
         if (this.endpointMetaData.parameterDecorators) {
             this.endpointMetaData.parameterDecorators.forEach(param => {
-                parameters[param.index] = this.getValue(param.handler(request), this.endpointMetaData.types[param.index]);
+                parameters[param.index] = this.getValue(param.handler.handle(request), this.endpointMetaData.types[param.index]);
             });
         }
 
@@ -58,5 +60,77 @@ export default class Endpoint {
             }
         }
         return value;
+    }
+
+    private trimSlashes(val: string): string {
+        if (!val || !val.trim().length) {
+            return "";
+        }
+        let returnValue = val.trim();
+        if (returnValue.startsWith("/")) {
+            returnValue = returnValue.substring(1);
+        }
+        if (returnValue.endsWith("/")) {
+            returnValue = returnValue.substring(0, returnValue.length - 1);
+        }
+        return returnValue;
+    }
+
+    public matchesSearch(url: string) {
+        const searchUrl = this.trimSlashes(url);
+        if (!searchUrl.length) {
+            return true;
+        }
+        const expectedUrlSegments: string[] = searchUrl.split("/");
+        const actualUrlSegments = this.fullPath.split("/");
+        if (actualUrlSegments.length < expectedUrlSegments.length) {
+            return false;
+        }
+        for (let i = 0; i < expectedUrlSegments.length; i++) {
+            if (expectedUrlSegments[i] !== actualUrlSegments[i]) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private getParamCommentString(paramDescription: ParameterDescription): string {
+        return "@" + paramDescription.type + " " + (paramDescription.name ? paramDescription.name + " " : "");
+    }
+
+    public describe(commentList: Comment[]): EndpointDescription {
+
+        let parameters: ParameterDescription[] = [];
+        if (this.endpointMetaData.parameterDecorators) {
+            this.endpointMetaData.parameterDecorators.forEach(param => {
+                parameters.push(param.handler.describe(this.endpointMetaData.types[param.index]));
+            });
+        }
+        parameters = parameters.filter((item, index, self) => self.findIndex(t => this.getParamCommentString(t) === this.getParamCommentString(item)) === index);
+
+        const comment = commentList.filter(c => c.class === this.controller.constructor.name && c.method === this.methodName)[0];
+        if (comment) {
+            const commentLines = comment.value.split("\n");
+
+            for (const param of parameters) {
+                let index = 0;
+                const paramText = this.getParamCommentString(param);
+                for (const line of commentLines) {
+                    if (line.startsWith(paramText)) {
+                        param.description = line.substr(paramText.length).trim();
+                        break;
+                    }
+                    index++;
+                }
+                if (index < commentLines.length) {
+                    commentLines.splice(index, 1);
+                }
+            }
+
+            comment.value = commentLines.join("\n");
+        }
+
+        return { name: this.methodName, path: this.fullPath, description: comment ? comment.value : "", parameters: parameters };
     }
 }

@@ -37,6 +37,7 @@
         "typedef": [true],
         "interface-over-type-literal": [false],
         "no-floating-promises": [true],
-        "space-before-function-paren": ["anonymous"]
+        "space-before-function-paren": ["anonymous"],
+        "max-classes-per-file": [false]
     }
 }

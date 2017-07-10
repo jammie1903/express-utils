@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from "express";
-import { Dictionary } from "./types";
+import { Dictionary, IEndpointParameterDecorator, ParameterDescription } from "./types";
 import LoadedHandlers from "./loaded-handlers";
 
 function initVal(object: any, keys: Array<string | any[]>) {
@@ -17,6 +17,12 @@ function initVal(object: any, keys: Array<string | any[]>) {
 export function Application(...paths: string[]) {
     return function (target: any) {
         target.prototype.applicationRoots = paths;
+    };
+}
+
+export function ApiReference(path: string) {
+    return function (target: any) {
+        target.prototype.apiReference = path;
     };
 }
 
@@ -65,27 +71,78 @@ export function Patch(path: string) {
     };
 }
 
+class RequestParamDecorator implements IEndpointParameterDecorator {
+    constructor(private name: string) { }
+
+    handle(request: Request) {
+        return request.params[this.name];
+    }
+    describe(parameterType: string): ParameterDescription {
+        return { type: "RequestParam", name: this.name, valueType: parameterType };
+    }
+}
+
 export function RequestParam(name: string) {
     return function (target: any, propertyKey: string, parameterIndex: number) {
-        EndpointParameterDecorator(target, propertyKey, parameterIndex, request => request.params[name]);
+        registerEndpointParameterDecorator(target, propertyKey, parameterIndex, new RequestParamDecorator(name));
     };
+}
+
+class QueryParamDecorator implements IEndpointParameterDecorator {
+    constructor(private name: string) { }
+
+    handle(request: Request) {
+        return request.query[this.name];
+    }
+    describe(parameterType: string): ParameterDescription {
+        return { type: "QueryParam", name: this.name, valueType: parameterType };
+    }
 }
 
 export function QueryParam(name: string) {
     return function (target: any, propertyKey: string, parameterIndex: number) {
-        EndpointParameterDecorator(target, propertyKey, parameterIndex, request => request.query[name]);
+        registerEndpointParameterDecorator(target, propertyKey, parameterIndex, new QueryParamDecorator(name));
     };
+}
+
+class RequestBodyDecorator implements IEndpointParameterDecorator {
+    constructor(private name: string) { }
+
+    handle(request: Request) {
+        return this.name ? request.body[this.name] : request.body;
+    }
+
+    describe(parameterType: string): ParameterDescription {
+        return { type: "RequestBody", valueType: (this.name ? "Object" : parameterType) };
+    }
 }
 
 export function RequestBody(name?: string) {
     return function (target: any, propertyKey: string, parameterIndex: number) {
-        EndpointParameterDecorator(target, propertyKey, parameterIndex, request => name ? request.body[name] : request.body);
+        registerEndpointParameterDecorator(target, propertyKey, parameterIndex, new RequestBodyDecorator(name));
     };
 }
 
-export function EndpointParameterDecorator(target: any, propertyKey: string, parameterIndex: number, handler: (request: Request) => any) {
+class GenericEndpointParameterDecorator implements IEndpointParameterDecorator {
+
+    constructor(private handler: (request: Request) => any) { }
+
+    handle(request: Request) {
+        this.handler(request);
+    }
+    describe(parameterType: string): ParameterDescription {
+        return null;
+    }
+}
+
+export function registerEndpointParameterDecorator(target: any, propertyKey: string, parameterIndex: number, handler: ((request: Request) => any) | IEndpointParameterDecorator) {
     initVal(target, ["controller", "endpoints", propertyKey, ["parameterDecorators", []]]);
-    target.controller.endpoints[propertyKey].parameterDecorators.push({ index: parameterIndex, handler });
+
+    if (typeof handler === "function") {
+        target.controller.endpoints[propertyKey].parameterDecorators.push({ index: parameterIndex, handler: new GenericEndpointParameterDecorator(handler) });
+    } else {
+        target.controller.endpoints[propertyKey].parameterDecorators.push({ index: parameterIndex, handler });
+    }
 }
 
 function generateServiceName(className: string) {
