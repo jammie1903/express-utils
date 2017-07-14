@@ -128,7 +128,7 @@ class GenericEndpointParameterDecorator implements IEndpointParameterDecorator {
     constructor(private handler: (request: Request) => any) { }
 
     handle(request: Request) {
-        this.handler(request);
+        return this.handler(request);
     }
     describe(parameterType: string): ParameterDescription {
         return null;
