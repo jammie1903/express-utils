@@ -134,6 +134,8 @@ export default class Endpoint {
             description = commentLines.join("\n");
         }
 
-        return { name: this.methodName, path: this.fullPath, description: description, parameters: parameters };
+        const displayName = this.methodName.replace(/([A-Z])/g, " $1").replace(/^./, str => str.toUpperCase());
+
+        return { name: displayName, path: this.fullPath || "/", description: description, parameters: parameters };
     }
 }
