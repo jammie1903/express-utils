@@ -104,7 +104,10 @@ export default class Endpoint {
         let parameters: ParameterDescription[] = [];
         if (this.endpointMetaData.parameterDecorators) {
             this.endpointMetaData.parameterDecorators.forEach(param => {
-                parameters.push(param.handler.describe(this.endpointMetaData.types[param.index]));
+                const paramDescription = param.handler.describe(this.endpointMetaData.types[param.index]);
+                if (paramDescription) {
+                    parameters.push(paramDescription);
+                }
             });
         }
         parameters = parameters.filter((item, index, self) => self.findIndex(t => this.getParamCommentString(t) === this.getParamCommentString(item)) === index);
