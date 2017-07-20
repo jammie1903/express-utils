@@ -38,8 +38,11 @@ export abstract class ExpressApp {
         } else {
             throw new Error("applicationRoots must be specified via @Application");
         }
-        // this.showPathsUrl = "/describe";
         if (this.apiReference) {
+            this.apiReference = this.apiReference.trim();
+            if (this.apiReference.startsWith("/")) {
+                this.apiReference = this.apiReference.substring(1);
+            }
             this.registerPathsUrl(commentParsePromise);
         }
     }
@@ -47,14 +50,22 @@ export abstract class ExpressApp {
     private registerPathsUrl(commentParsePromise: Promise<Comment[]>) {
         commentParsePromise.then(comments => this.comments = comments);
         const router: express.Router = express.Router();
-        router.get("/", (request, response) => {
+        router.get(new RegExp(`.*\/${this.apiReference}$`), (request, response, next) => {
             if (this.comments) {
-                response.send(toHtml(this.endpoints.filter(endpoint => endpoint.matchesSearch(request.url.substring(this.apiReference.length))).map(endpoint => endpoint.describe(this.comments))));
+                console.log(this.comments.length);
+                const paramStart = request.url.indexOf("?");
+                const searchUrl = request.url.substring(0, (paramStart === -1 ? request.url.length : paramStart) - this.apiReference.length);
+                const matches = this.endpoints.filter(endpoint => endpoint.matchesSearch(searchUrl)).map(endpoint => endpoint.describe(this.comments));
+                if (matches.length) {
+                    response.send(toHtml(matches));
+                } else {
+                    next();
+                }
             } else {
                 throw new Error("endpoint descriptions not yet parsed");
             }
         });
-        this.express.use(this.apiReference, router);
+        this.express.use("/", router);
     }
 
     private walkSync(dir) {

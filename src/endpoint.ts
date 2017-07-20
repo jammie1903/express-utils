@@ -81,8 +81,8 @@ export default class Endpoint {
         if (!searchUrl.length) {
             return true;
         }
-        const expectedUrlSegments: string[] = searchUrl.split("/");
-        const actualUrlSegments = this.fullPath.split("/");
+        const expectedUrlSegments: string[] = searchUrl.split("/").map(segment => segment.startsWith(":") ? segment.substring(1) : segment);
+        const actualUrlSegments = this.fullPath.split("/").map(segment => segment.startsWith(":") ? segment.substring(1) : segment);
         if (actualUrlSegments.length < expectedUrlSegments.length) {
             return false;
         }
@@ -110,6 +110,7 @@ export default class Endpoint {
         parameters = parameters.filter((item, index, self) => self.findIndex(t => this.getParamCommentString(t) === this.getParamCommentString(item)) === index);
 
         const comment = commentList.filter(c => c.class === this.controller.constructor.name && c.method === this.methodName)[0];
+        let description = "";
         if (comment) {
             const commentLines = comment.value.split("\n");
 
@@ -127,10 +128,9 @@ export default class Endpoint {
                     commentLines.splice(index, 1);
                 }
             }
-
-            comment.value = commentLines.join("\n");
+            description = commentLines.join("\n");
         }
 
-        return { name: this.methodName, path: this.fullPath, description: comment ? comment.value : "", parameters: parameters };
+        return { name: this.methodName, path: this.fullPath, description: description, parameters: parameters };
     }
 }
