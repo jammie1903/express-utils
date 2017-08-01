@@ -136,6 +136,6 @@ export default class Endpoint {
 
         const displayName = this.methodName.replace(/([A-Z])/g, " $1").replace(/^./, str => str.toUpperCase());
 
-        return { name: displayName, path: this.fullPath || "/", description: description, parameters: parameters };
+        return { name: displayName, method: this.endpointMetaData.method, path: this.fullPath || "/", description: description, parameters: parameters };
     }
 }

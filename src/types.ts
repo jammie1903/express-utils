@@ -16,6 +16,7 @@ export type ParameterDescription = {
 
 export type EndpointDescription = {
     name: string,
+    method: string,
     path: string,
     description: string,
     parameters: ParameterDescription[]

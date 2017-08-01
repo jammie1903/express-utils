@@ -18,6 +18,8 @@ export abstract class ExpressApp {
     private injectQueue: Autowirable[] = [];
     private endpoints: Endpoint[] = [];
     private apiReference: string;
+    private stylesheetPath: string;
+    private stylesheet: string;
     private comments = [];
 
     protected abstract environmentSettings(): Dictionary<string>;
@@ -43,6 +45,11 @@ export abstract class ExpressApp {
             if (this.apiReference.startsWith("/")) {
                 this.apiReference = this.apiReference.substring(1);
             }
+            if (this.stylesheetPath) {
+                fs.readFile(this.stylesheetPath, "utf-8", (err, data) => {
+                    this.stylesheet = data;
+                });
+            }
             this.registerPathsUrl(commentParsePromise);
         }
     }
@@ -57,7 +64,7 @@ export abstract class ExpressApp {
                 const searchUrl = request.url.substring(0, (paramStart === -1 ? request.url.length : paramStart) - this.apiReference.length);
                 const matches = this.endpoints.filter(endpoint => endpoint.matchesSearch(searchUrl)).map(endpoint => endpoint.describe(this.comments));
                 if (matches.length) {
-                    response.send(toHtml(matches));
+                    response.send(toHtml(matches, this.stylesheet));
                 } else {
                     next();
                 }

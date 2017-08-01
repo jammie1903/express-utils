@@ -20,9 +20,10 @@ export function Application(...paths: string[]) {
     };
 }
 
-export function ApiReference(path: string) {
+export function ApiReference(path: string, stylesheetPath?: string) {
     return function (target: any) {
         target.prototype.apiReference = path;
+        target.prototype.stylesheetPath = stylesheetPath;
     };
 }
 
