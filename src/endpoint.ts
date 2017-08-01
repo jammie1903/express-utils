@@ -35,17 +35,25 @@ export default class Endpoint {
             parameters[1] = response;
         }
 
+        let handlerPromise = Promise.resolve();
+
         if (this.endpointMetaData.parameterDecorators) {
             this.endpointMetaData.parameterDecorators.forEach(param => {
-                parameters[param.index] = this.getValue(param.handler.handle(request), this.endpointMetaData.types[param.index]);
+                handlerPromise = handlerPromise.then(() => {
+                    return Promise.resolve(param.handler.handle(request)).then(paramValue => {
+                        parameters[param.index] = this.getValue(paramValue, this.endpointMetaData.types[param.index]);
+                    });
+                });
             });
         }
-
-        const responseBody = this.method.apply(this.controller, parameters) || "";
-        Promise.resolve(responseBody).then(result => response.finished ? null : response.jsonp(result)).catch(next);
+        handlerPromise.then(() => {
+            Promise.resolve(this.method.apply(this.controller, parameters) || "").then(result => response.finished ? null : response.jsonp(result)).catch(next);
+        });
+        // const responseBody = this.method.apply(this.controller, parameters) || "";
+        // Promise.resolve(responseBody).then(result => response.finished ? null : response.jsonp(result)).catch(next);
     }
 
-    private getValue(value: string, type: any): any {
+    private getValue(value: any, type: any): any {
         if (typeof value === "undefined" || typeof value === "string") {
             switch (type) {
                 case "Boolean":
