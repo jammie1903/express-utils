@@ -24,6 +24,12 @@ export abstract class ExpressApp {
 
     protected abstract environmentSettings(): Dictionary<string>;
 
+    protected abstract middleware(): void;
+
+    protected responseFormatter(response: any): any {
+        return { data: response };
+    }
+
     constructor() {
 
         this.settings = this.environmentSettings();
@@ -199,7 +205,7 @@ export abstract class ExpressApp {
                             const endpoint: Endpoint = new Endpoint(e, controllerData, instance);
                             this.endpoints.push(endpoint);
 
-                            const endPointWrapper = (request, response, next) => endpoint.handle(request, response, next);
+                            const endPointWrapper = (request, response, next) => endpoint.handle(request, response, next, this.responseFormatter);
 
                             switch (controllerData.endpoints[e].method) {
                                 case "GET": router.get(controllerData.endpoints[e].path, endPointWrapper); break;
@@ -218,8 +224,6 @@ export abstract class ExpressApp {
             }
         });
     }
-
-    protected abstract middleware(): void;
 
     // Configure API endpoints.
     private routes(): void {

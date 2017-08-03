@@ -24,7 +24,7 @@ export default class Endpoint {
         this.injectResponse = this.endpointMetaData.types.length > 1 && this.injectRequest && injectionIndexes.indexOf(1) === -1;
     }
 
-    public handle(request: Request, response: Response, next) {
+    public handle(request: Request, response: Response, next, responseFormatter: (response: any) => any) {
 
         const parameters: any[] = Array(this.endpointMetaData.types.length).fill(null);
 
@@ -47,7 +47,7 @@ export default class Endpoint {
             });
         }
         handlerPromise.then(() => {
-            Promise.resolve(this.method.apply(this.controller, parameters) || "").then(result => response.finished ? null : response.jsonp(result)).catch(next);
+            Promise.resolve(this.method.apply(this.controller, parameters) || "").then(result => response.finished ? null : response.json(responseFormatter(result))).catch(next);
         });
         // const responseBody = this.method.apply(this.controller, parameters) || "";
         // Promise.resolve(responseBody).then(result => response.finished ? null : response.jsonp(result)).catch(next);
