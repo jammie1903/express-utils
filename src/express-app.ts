@@ -5,7 +5,7 @@ import * as path from "path";
 import Endpoint from "./endpoint";
 import { ServiceCache } from "./cache";
 import LoadedHandlers from "./loaded-handlers";
-import { Dictionary, Autowirable } from "./types";
+import { Dictionary } from "./types";
 import { Comment, getMethodComments } from "./comment-parser";
 import toHtml from "./doc-formatter";
 
@@ -15,7 +15,7 @@ export abstract class ExpressApp {
     private applicationRoots: string[];
     public express: express.Application;
     private servicePrototypes = {};
-    private injectQueue: Autowirable[] = [];
+    private injectQueue: any[] = [];
     private endpoints: Endpoint[] = [];
     private apiReference: string;
     private stylesheetPath: string;
@@ -42,7 +42,7 @@ export abstract class ExpressApp {
             commentParsePromise = this.loadAll();
             this.loadServices();
             this.loadControllers();
-            this.injectServices();
+            this.initialise();
         } else {
             throw new Error("applicationRoots must be specified via @Application");
         }
@@ -96,17 +96,30 @@ export abstract class ExpressApp {
         return returnList;
     }
 
-    private injectServices() {
+    private initialise() {
         while (this.injectQueue.length) {
-            const item = this.injectQueue.shift();
-            for (const f in item.autowireFields) {
-                if (item.autowireFields.hasOwnProperty(f)) {
-                    const service = this.getService(item.autowireFields[f]);
-                    if (service) {
-                        item.instance[f] = service;
+            const service = this.injectQueue.shift();
+            this.initialiseInstance(service);
+        }
+    }
+
+    private initialiseInstance(item: any) {
+        if (!item.initialised) {
+            if (item.autowires) {
+                for (const f in item.autowires) {
+                    if (item.autowires.hasOwnProperty(f)) {
+                        const service = this.getService(item.autowires[f]);
+                        if (service) {
+                            this.initialiseInstance(service);
+                            item[f] = service;
+                        }
                     }
                 }
             }
+            if (typeof item.onInit === "function") {
+                item.onInit();
+            }
+            item.initialised = true;
         }
     }
 
@@ -151,9 +164,10 @@ export abstract class ExpressApp {
             const service = matchingServices[0];
             const instance = new service();
             ServiceCache.put(serviceName, instance);
-            if (service.prototype.autowires) {
-                this.injectQueue.push({ instance: instance, autowireFields: service.prototype.autowires });
-            }
+            // if (service.prototype.autowires) {
+            ///this.injectQueue.push({ instance: instance, autowireFields: service.prototype.autowires || [] });
+            // }
+            this.injectQueue.push(instance);
             return instance;
         }
     }
@@ -217,9 +231,10 @@ export abstract class ExpressApp {
                         }
                     }
                 }
-                if (controller.prototype.autowires) {
-                    this.injectQueue.push({ instance: instance, autowireFields: controller.prototype.autowires });
-                }
+                // if (controller.prototype.autowires) {
+                //     this.injectQueue.push({ instance: instance, autowireFields: controller.prototype.autowires });
+                // }
+                this.injectQueue.push(instance);
                 this.express.use(controllerData.path, router);
             }
         });

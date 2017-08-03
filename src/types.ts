@@ -38,8 +38,3 @@ export type ParameterInfo = {
     index: number,
     handler: IEndpointParameterDecorator
 };
-
-export type Autowirable = {
-    instance: any,
-    autowireFields: Dictionary<string>
-};
