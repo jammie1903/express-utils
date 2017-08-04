@@ -1,0 +1,78 @@
+* {
+    margin: 0px;
+}
+
+.endpoint { 
+    border: 2px solid gray;
+    border-radius: 10px;
+    padding: 10px;
+    margin: 10px;
+}
+
+.endpoint .description {
+    margin-top: 10px;
+}
+
+.endpoint .info {
+    margin: 5px 0px;
+    display: inline;
+}
+
+.endpoint .info label {
+    display: none;
+}
+
+.endpoint .info .value {
+    font-family: monospace;
+}
+
+.endpoint .method .value {
+    padding: 4px 6px;
+    border-radius: 4px;
+    color: white;
+    font-weight: 500;
+    display: inline-block;
+}
+
+.endpoint .path .value {
+    padding: 4px 6px;
+    border-radius: 4px;
+    color: white;
+    font-weight: 500;
+    display: inline-block;
+    background: #112;
+}
+
+.endpoint .path .value .request-parameter {
+    color: lightblue;
+}
+
+.endpoint .method .value.get {
+    background: green;
+}
+
+.endpoint .method .value.post {
+    background: darkblue;
+}
+
+h1 {
+    margin-bottom: 10px;
+}
+
+h3 {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+th, td {
+    text-align: left;
+    padding: 8px;
+    border-bottom: 1px solid #ddd;
+}
+
+tbody tr:nth-child(odd){background-color: #f2f2f2}

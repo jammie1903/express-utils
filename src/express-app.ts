@@ -51,11 +51,10 @@ export abstract class ExpressApp {
             if (this.apiReference.startsWith("/")) {
                 this.apiReference = this.apiReference.substring(1);
             }
-            if (this.stylesheetPath) {
-                fs.readFile(this.stylesheetPath, "utf-8", (err, data) => {
-                    this.stylesheet = data;
-                });
-            }
+            fs.readFile(this.stylesheetPath || path.join(__dirname, "../assets/docs.css"), "utf-8", (err, data) => {
+                this.stylesheet = data;
+            });
+
             this.registerPathsUrl(commentParsePromise);
         }
     }
