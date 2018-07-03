@@ -147,8 +147,8 @@ export abstract class ExpressApp {
                 throw Error(`${serviceName} matched no services`);
             }
 
-            const matchingServices = servicePrototypeList.filter(service =>
-                this.settingsMatch(service.prototype.service.environmentOptions, this.settings)
+            const matchingServices = servicePrototypeList.filter(s =>
+                this.settingsMatch(s.prototype.service.environmentOptions, this.settings)
             ).sort((s1, s2) => Object.keys(s2.prototype.service.environmentOptions).length - Object.keys(s1.prototype.service.environmentOptions).length);
 
             if (!matchingServices.length) {
@@ -164,7 +164,7 @@ export abstract class ExpressApp {
             const instance = new service();
             ServiceCache.put(serviceName, instance);
             // if (service.prototype.autowires) {
-            ///this.injectQueue.push({ instance: instance, autowireFields: service.prototype.autowires || [] });
+            // this.injectQueue.push({ instance: instance, autowireFields: service.prototype.autowires || [] });
             // }
             this.injectQueue.push(instance);
             return instance;
