@@ -1,5 +1,5 @@
 import * as express from "express";
-import * as HTTPError from "http-errors";
+import * as HTTPErrors from "http-errors";
 import * as fs from "fs";
 import * as path from "path";
 import Endpoint from "./endpoint";
@@ -22,16 +22,7 @@ export abstract class ExpressApp {
     private stylesheet: string;
     private comments = [];
 
-    protected abstract environmentSettings(): Dictionary<string>;
-
-    protected abstract middleware(): void;
-
-    protected responseFormatter(response: any): any {
-        return { data: response };
-    }
-
     constructor() {
-
         this.settings = this.environmentSettings();
         this.express = express();
 
@@ -57,6 +48,23 @@ export abstract class ExpressApp {
 
             this.registerPathsUrl(commentParsePromise);
         }
+    }
+
+    protected abstract environmentSettings(): Dictionary<string>;
+
+    protected abstract middleware(): void;
+
+    protected responseFormatter(response: any): any {
+        return { data: response };
+    }
+
+    protected errorHandler(err, req: express.Request, res: express.Response, next: express.NextFunction) {
+        if (!(err instanceof HTTPErrors.HttpError)) {
+            console.error(err);
+            err = new HTTPErrors.InternalServerError();
+        }
+        res.statusCode = err.statusCode;
+        res.jsonp(err);
     }
 
     private registerPathsUrl(commentParsePromise: Promise<Comment[]>) {
@@ -100,6 +108,15 @@ export abstract class ExpressApp {
             const service = this.injectQueue.shift();
             this.initialiseInstance(service);
         }
+        // Add "not-found" handler for any requests that dont match a route
+        this.express.use((req, res, next) => {
+            next(new HTTPErrors.NotFound());
+        });
+
+        // Pipe errors through to the error handler
+        this.express.use((err, req, res, next) => {
+            this.errorHandler(err, req, res, next);
+        });
     }
 
     private initialiseInstance(item: any) {
@@ -235,24 +252,6 @@ export abstract class ExpressApp {
                 // }
                 this.injectQueue.push(instance);
                 this.express.use(controllerData.path, router);
-            }
-        });
-    }
-
-    // Configure API endpoints.
-    private routes(): void {
-        // 404
-        this.express.use((req, res, next) => {
-            res.jsonp(new HTTPError.NotFound());
-        });
-
-        // 500
-        this.express.use((err, req: express.Request, res: express.Response, next: express.NextFunction) => {
-            if (err instanceof HTTPError.HttpError) {
-                res.statusCode = err.statusCode;
-                res.jsonp(err);
-            } else {
-                res.jsonp(new HTTPError.InternalServerError());
             }
         });
     }

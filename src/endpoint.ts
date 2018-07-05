@@ -46,11 +46,11 @@ export default class Endpoint {
                 });
             });
         }
-        handlerPromise.then(() => {
-            Promise.resolve(this.method.apply(this.controller, parameters) || "").then(result => response.finished ? null : response.json(responseFormatter(result))).catch(next);
-        });
-        // const responseBody = this.method.apply(this.controller, parameters) || "";
-        // Promise.resolve(responseBody).then(result => response.finished ? null : response.jsonp(result)).catch(next);
+        handlerPromise.then(() =>
+             Promise.resolve(this.method.apply(this.controller, parameters) || "")
+                .then(result => response.finished ? null : response.jsonp(responseFormatter(result)))
+        )
+        .catch(next);
     }
 
     private getValue(value: any, type: any): any {
