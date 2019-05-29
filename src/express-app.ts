@@ -180,20 +180,17 @@ export abstract class ExpressApp {
             const service = matchingServices[0];
             const instance = new service();
             ServiceCache.put(serviceName, instance);
-            // if (service.prototype.autowires) {
-            // this.injectQueue.push({ instance: instance, autowireFields: service.prototype.autowires || [] });
-            // }
+
             this.injectQueue.push(instance);
             return instance;
         }
     }
 
     private loadAll() {
-
         let readPromise = Promise.resolve([]);
 
         this.applicationRoots.forEach(root => this.walkSync(root)
-            .filter((file) => file.slice(-11) === ".service.js" || file.slice(-14) === ".controller.js")
+        .filter((file) => file.slice(-3) === ".js")
             .forEach(file => {
                 require(file);
                 if (file.slice(-14) === ".controller.js") {
@@ -247,9 +244,7 @@ export abstract class ExpressApp {
                         }
                     }
                 }
-                // if (controller.prototype.autowires) {
-                //     this.injectQueue.push({ instance: instance, autowireFields: controller.prototype.autowires });
-                // }
+
                 this.injectQueue.push(instance);
                 this.express.use(controllerData.path, router);
             }
